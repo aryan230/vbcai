@@ -2,7 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */ images: {
-    domains: ["assets.aceternity.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**", // Allows images from any domain
+      },
+    ],
+    domains: ["example.com"], // You can specify specific domains if needed
+    dangerouslyAllowSVG: true, // Allow SVG images
   },
   typescript: {
     // !! WARN !!
