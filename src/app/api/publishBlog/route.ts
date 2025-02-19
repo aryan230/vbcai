@@ -18,9 +18,23 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 interface BlogPost {
-  blog_post: string;
+  title: string;
+  content: string;
+  author: string;
   timestamp: string;
-  source: string;
+  slug: string;
+  images?: string[];
+  tags?: string[];
+  category?: string;
+  excerpt?: string;
+  readTime?: string;
+  status: "draft" | "published";
+  commentsEnabled: boolean;
+  seo?: {
+    title: string;
+    description: string;
+    keywords: string[];
+  };
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -35,23 +49,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // Parse JSON payload
-    const { blog_post, timestamp, source }: BlogPost = await req.json();
+    const data: BlogPost = await req.json();
 
     // Validate required fields
-    if (!blog_post || !timestamp || !source) {
+    const { title, content, author, timestamp, slug, status, commentsEnabled } =
+      data;
+    if (!title || !content || !author || !timestamp || !slug || !status) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    console.log("Received Blog Post:", { blog_post, timestamp, source });
+    console.log("Received Blog Post:", data);
 
     // Save to Firestore
     await addDoc(collection(db, "blogs"), {
-      blog_post,
-      timestamp,
-      source,
+      ...data,
       createdAt: new Date(),
     });
 
