@@ -1,6 +1,6 @@
 // components/DesignBlog.tsx
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ChevronDown,
   Clock,
@@ -12,156 +12,63 @@ import {
   Search,
   Menu,
 } from "lucide-react";
+import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import { db } from "../lib/firebase";
 import { navigation, categories, articles } from "../data/content";
+import Link from "next/link";
+import Header from "./Header";
+import ArticleGrid from "./ArticleGrid";
+
+interface Article {
+  id: string;
+  title: string;
+  excerpt: string;
+  author: string;
+  category: string;
+  readTime: string;
+  createdAt: any;
+  content: string;
+  images: string[];
+  tags: string[];
+  status: string;
+}
 
 const DesignBlog: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const featuredArticle = articles.find((a) => a.featured);
-  const regularArticles = articles.filter((a) => !a.featured);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [visibleArticles, setVisibleArticles] = useState(3);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const q = query(collection(db, "blogs"), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const articlesData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Article[];
+
+        setArticles(articlesData);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching articles:", error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, []);
+
+  // Get the latest article as featured
+  const featuredArticle = articles[0];
+  // Get remaining articles
+  const regularArticles = articles.slice(1);
 
   return (
     <div className="min-h-screen bg-white">
       {/* Elegant Header with Medical Blue Gradient */}
-
-      <header className="border-b border-gray-100">
-        <div className="max-w-7xl mx-auto">
-          {/* Top Bar */}
-          <div className="border-b border-gray-100 py-2 px-6">
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <div className="flex items-center space-x-6">
-                <a>VBC Healthcare Insights</a>
-                <span>|</span>
-                <a>Subscribe to our newsletter</a>
-              </div>
-              <div className="flex items-center space-x-4">
-                <a href="#" className="hover:text-gray-900">
-                  Sign in
-                </a>
-                <span>|</span>
-                <a href="#" className="hover:text-gray-900">
-                  Subscribe
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Header */}
-          <div className="py-6 px-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-12">
-                <div className="flex items-center space-x-3">
-                  <Activity className="w-8 h-8 text-blue-600" />
-                  <span className="font-black text-xl bg-gradient-to-r from-blue-900 via-blue-600 to-blue-900 bg-clip-text text-transparent">
-                    VBC.ai
-                  </span>
-                </div>
-
-                <nav className="hidden md:flex items-center space-x-8">
-                  <a href="#" className="text-gray-600 hover:text-gray-900">
-                    Latest
-                  </a>
-                  <div className="relative group">
-                    <button className="flex items-center space-x-1 text-gray-600 hover:text-gray-900">
-                      <span>Topics</span>
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
-                    <div className="absolute hidden group-hover:block w-56 bg-white shadow-lg rounded-lg py-2 mt-1">
-                      <a
-                        href="#"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        Value-Based Care
-                      </a>
-                      <a
-                        href="#"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        Population Health
-                      </a>
-                      <a
-                        href="#"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        Care Management
-                      </a>
-                      <a
-                        href="#"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        Quality Metrics
-                      </a>
-                    </div>
-                  </div>
-                  <a href="#" className="text-gray-600 hover:text-gray-900">
-                    Case Studies
-                  </a>
-                  <a href="#" className="text-gray-600 hover:text-gray-900">
-                    Research
-                  </a>
-                </nav>
-              </div>
-
-              <div className="flex items-center space-x-6">
-                <button
-                  onClick={() => setIsSearchOpen(!isSearchOpen)}
-                  className="p-2 hover:bg-gray-100 rounded-full"
-                >
-                  <Search className="w-5 h-5 text-gray-600" />
-                </button>
-                <button className="hidden md:block px-5 py-2 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors">
-                  Subscribe
-                </button>
-                <button className="md:hidden p-2 hover:bg-gray-100 rounded-full">
-                  <Menu className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          {isSearchOpen && (
-            <div className="border-t border-gray-100 py-4 px-6">
-              <div className="max-w-2xl mx-auto">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search articles..."
-                    className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Categories Bar */}
-          <div className="overflow-x-auto border-t border-gray-100">
-            <div className="px-6 py-3 flex items-center space-x-6 text-sm whitespace-nowrap">
-              <span className="font-medium text-gray-900">Trending:</span>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                Payment Models
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                Clinical Outcomes
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                Patient Engagement
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                Risk Stratification
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                Care Coordination
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                Healthcare Analytics
-              </a>
-            </div>
-          </div>
-        </div>
-      </header>
-
+      <Header />
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-6 pt-16 pb-12">
         <div className="text-center max-w-3xl mx-auto mb-16">
@@ -177,7 +84,6 @@ const DesignBlog: React.FC = () => {
             management.
           </p>
         </div>
-
         {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           {[
@@ -225,109 +131,79 @@ const DesignBlog: React.FC = () => {
             </div>
           ))}
         </div>
-
         {/* Featured Article Hero */}
-        {featuredArticle && (
-          <div className="relative rounded-2xl overflow-hidden mb-24 group">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-100 via-indigo-100 to-sky-100 animate-gradient opacity-90" />
-            <div className="relative p-12 md:p-16">
-              <div className="max-w-3xl">
-                <div className="flex items-center space-x-4 mb-6">
-                  <span className="px-3 py-1 bg-blue-600/10 rounded-full text-sm font-medium text-blue-700">
-                    {featuredArticle.category}
-                  </span>
-                  <div className="flex items-center text-sm text-blue-900/70">
-                    <Clock className="w-4 h-4 mr-1" />
-                    {featuredArticle.readTime}
-                  </div>
-                </div>
-                <h2 className="text-4xl font-bold mb-6 text-blue-900 group-hover:text-blue-700 transition-colors">
-                  {featuredArticle.title}
-                </h2>
-                <p className="text-blue-900/80 text-lg mb-8 max-w-2xl">
-                  {featuredArticle.excerpt}
-                </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 rounded-full bg-blue-600/10 mr-4" />
-                    <div>
-                      <p className="font-medium text-blue-900">
-                        {featuredArticle.author.name}
-                      </p>
-                      <p className="text-sm text-blue-900/70">
-                        {featuredArticle.author.role}
-                      </p>
+        {/* // Inside Featured Article Hero section */}
+        {/* {featuredArticle && (
+          <div className="mb-24">
+            <div className="relative rounded-3xl overflow-hidden">
+              <div className="absolute inset-0">
+                {featuredArticle.images?.[0] && (
+                  <img
+                    src={featuredArticle.images[0]}
+                    alt={featuredArticle.title}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-blue-600/80 mix-blend-multiply" />
+              </div>
+              <div className="relative px-8 py-16 md:px-12 md:py-20">
+                <div className="max-w-3xl">
+                  <div className="flex items-center space-x-4 mb-6">
+                    <span className="px-4 py-1.5 bg-white/10 backdrop-blur-sm text-white rounded-full text-sm font-medium">
+                      {featuredArticle.category}
+                    </span>
+                    <div className="flex items-center text-sm text-white/80">
+                      <Clock className="w-4 h-4 mr-1.5" />
+                      {featuredArticle.readTime}
                     </div>
                   </div>
-                  <button className="flex items-center space-x-2 px-5 py-2.5 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm">
-                    <span>Read article</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+
+                  <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">
+                    {featuredArticle.title}
+                  </h2>
+
+                  <p className="text-white/90 text-lg mb-8 max-w-2xl line-clamp-3">
+                    {featuredArticle.excerpt}
+                  </p>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm mr-4 flex items-center justify-center">
+                        <span className="text-white font-medium">
+                          {featuredArticle.author.charAt(0)}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-white">
+                          {featuredArticle.author}
+                        </p>
+                        <p className="text-sm text-white/80">
+                          {new Date(
+                            featuredArticle.createdAt.toDate()
+                          ).toLocaleDateString("en-US", {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Link
+                      href={`/article/${featuredArticle.id}`}
+                      className="flex items-center space-x-2 px-6 py-3 bg-white text-blue-900 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors shadow-sm group"
+                    >
+                      <span>Read article</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        )}
-
+        )} */}
         {/* Article Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {regularArticles.map((article, index) => (
-            <article
-              key={article.id}
-              className={`group rounded-2xl overflow-hidden bg-white border border-blue-100 shadow-sm hover:shadow-lg transition-all ${
-                index === 0 ? "md:col-span-2" : ""
-              }`}
-            >
-              <div className="relative aspect-[16/9] overflow-hidden">
-                <div
-                  className={`absolute inset-0 bg-gradient-to-r animate-gradient ${
-                    index % 2 === 0
-                      ? "from-blue-100 via-indigo-100 to-sky-100"
-                      : "from-sky-100 via-blue-100 to-indigo-100"
-                  }`}
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center space-x-4 mb-4">
-                  <span className="text-sm font-medium text-blue-700 bg-blue-50 px-3 py-1 rounded-full">
-                    {article.category}
-                  </span>
-                  <div className="flex items-center text-sm text-blue-900/70">
-                    <Clock className="w-4 h-4 mr-1" />
-                    {article.readTime}
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-blue-900 group-hover:text-blue-600 transition-colors">
-                  {article.title}
-                </h3>
-                <p className="text-blue-900/70 mb-6 line-clamp-2">
-                  {article.excerpt}
-                </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 mr-3" />
-                    <div>
-                      <p className="font-medium text-sm text-blue-900">
-                        {article.author.name}
-                      </p>
-                      <p className="text-xs text-blue-900/70">
-                        {article.author.date}
-                      </p>
-                    </div>
-                  </div>
-                  {article.tags && (
-                    <div className="flex items-center space-x-2">
-                      <span className="px-3 py-1 rounded-full text-xs bg-blue-50 text-blue-700">
-                        {article.tags[0]}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-
+        <ArticleGrid />
         {/* Newsletter Section */}
         <section className="my-24 px-6 py-16 bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 rounded-3xl">
           <div className="max-w-4xl mx-auto text-center">
@@ -350,7 +226,6 @@ const DesignBlog: React.FC = () => {
             </div>
           </div>
         </section>
-
         {/* Key Benefits Section */}
         <section className="my-24">
           <h2 className="text-3xl font-bold text-center mb-16 bg-gradient-to-r from-blue-900 via-blue-600 to-blue-900 bg-clip-text text-transparent">
@@ -390,7 +265,6 @@ const DesignBlog: React.FC = () => {
             ))}
           </div>
         </section>
-
         {/* Success Stories Carousel */}
         <section className="my-24 bg-blue-50/50 py-16 px-6 rounded-3xl">
           <div className="max-w-6xl mx-auto">
@@ -433,7 +307,6 @@ const DesignBlog: React.FC = () => {
             </div>
           </div>
         </section>
-
         {/* CTA Section */}
         <section className="my-24 text-center">
           <div className="max-w-3xl mx-auto">
