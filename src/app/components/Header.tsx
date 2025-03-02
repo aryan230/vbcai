@@ -198,10 +198,16 @@ export default function Header() {
                     )}
                   </div>
                 </div>
-                <a href="#" className="text-gray-600 hover:text-gray-900">
+                <a
+                  href="/case-studies"
+                  className="text-gray-600 hover:text-gray-900"
+                >
                   Case Studies
                 </a>
-                <a href="#" className="text-gray-600 hover:text-gray-900">
+                <a
+                  href="/research"
+                  className="text-gray-600 hover:text-gray-900"
+                >
                   Research
                 </a>
               </nav>
@@ -281,13 +287,13 @@ export default function Header() {
                 </div>
               </div>
               <a
-                href="#"
+                href="/case-studies"
                 className="text-gray-600 hover:text-gray-900 py-2 px-4 hover:bg-gray-50 rounded-md"
               >
                 Case Studies
               </a>
               <a
-                href="#"
+                href="/research"
                 className="text-gray-600 hover:text-gray-900 py-2 px-4 hover:bg-gray-50 rounded-md"
               >
                 Research
