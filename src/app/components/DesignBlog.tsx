@@ -18,6 +18,9 @@ import { navigation, categories, articles } from "../data/content";
 import Link from "next/link";
 import Header from "./Header";
 import ArticleGrid from "./ArticleGrid";
+import CTA from "./CTA";
+import Footer from "./Footer";
+import CTA2 from "./CTA2";
 
 interface Article {
   id: string;
@@ -205,27 +208,7 @@ const DesignBlog: React.FC = () => {
         {/* Article Grid */}
         <ArticleGrid />
         {/* Newsletter Section */}
-        <section className="my-24 px-6 py-16 bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 rounded-3xl">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-900 via-blue-600 to-blue-900 bg-clip-text text-transparent">
-              Stay Updated with VBC Insights
-            </h2>
-            <p className="text-blue-900/70 mb-8">
-              Join healthcare leaders and receive our weekly digest of VBC
-              strategies, case studies, and analytics insights.
-            </p>
-            <div className="flex max-w-md mx-auto space-x-4">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-lg border border-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200"
-              />
-              <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                Subscribe
-              </button>
-            </div>
-          </div>
-        </section>
+        <CTA />
         {/* Key Benefits Section */}
         <section className="my-24">
           <h2 className="text-3xl font-bold text-center mb-16 bg-gradient-to-r from-blue-900 via-blue-600 to-blue-900 bg-clip-text text-transparent">
@@ -266,7 +249,7 @@ const DesignBlog: React.FC = () => {
           </div>
         </section>
         {/* Success Stories Carousel */}
-        <section className="my-24 bg-blue-50/50 py-16 px-6 rounded-3xl">
+        {/* <section className="my-24 bg-blue-50/50 py-16 px-6 rounded-3xl">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-16 bg-gradient-to-r from-blue-900 via-blue-600 to-blue-900 bg-clip-text text-transparent">
               Success Stories in VBC Implementation
@@ -306,152 +289,13 @@ const DesignBlog: React.FC = () => {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
         {/* CTA Section */}
-        <section className="my-24 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-blue-900 via-blue-600 to-blue-900 bg-clip-text text-transparent">
-              Ready to Transform Your Healthcare Delivery?
-            </h2>
-            <p className="text-blue-900/70 mb-8">
-              Join leading healthcare organizations in their journey towards
-              value-based care excellence.
-            </p>
-            <div className="flex items-center justify-center space-x-4">
-              <button className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                Get Started
-              </button>
-              <button className="px-8 py-3 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-                Schedule Demo
-              </button>
-            </div>
-          </div>
-        </section>
+        <CTA2 />
       </div>
 
       {/* Footer Section */}
-      <footer className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border-t border-blue-100">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <Activity className="w-6 h-6 text-blue-600" />
-                <span className="font-black text-lg bg-gradient-to-r from-blue-900 via-blue-600 to-blue-900 bg-clip-text text-transparent">
-                  VBC.ai
-                </span>
-              </div>
-              <p className="text-sm text-blue-900/70">
-                Empowering healthcare organizations with data-driven insights
-                for better value-based care delivery.
-              </p>
-              <div className="flex space-x-4">
-                {["twitter", "linkedin", "facebook"].map((social) => (
-                  <a
-                    key={social}
-                    href={`#${social}`}
-                    className="w-10 h-10 rounded-full bg-white border border-blue-100 flex items-center justify-center hover:bg-blue-50 transition-colors"
-                  >
-                    <span className="sr-only">{social}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-4">Solutions</h3>
-              <ul className="space-y-3">
-                {[
-                  "Population Health",
-                  "Care Management",
-                  "Risk Analytics",
-                  "Quality Metrics",
-                ].map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      className="text-sm text-blue-900/70 hover:text-blue-900"
-                    >
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-4">Resources</h3>
-              <ul className="space-y-3">
-                {[
-                  "Blog",
-                  "Case Studies",
-                  "Webinars",
-                  "Research Papers",
-                  "Documentation",
-                ].map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      className="text-sm text-blue-900/70 hover:text-blue-900"
-                    >
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-4">Company</h3>
-              <ul className="space-y-3">
-                {[
-                  "About Us",
-                  "Careers",
-                  "Contact",
-                  "Privacy Policy",
-                  "Terms of Service",
-                ].map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      className="text-sm text-blue-900/70 hover:text-blue-900"
-                    >
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-blue-100">
-            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-              <p className="text-sm text-blue-900/70">
-                © {new Date().getFullYear()} VBC.ai. All rights reserved.
-              </p>
-              <div className="flex space-x-6">
-                <a
-                  href="#"
-                  className="text-sm text-blue-900/70 hover:text-blue-900"
-                >
-                  Privacy Policy
-                </a>
-                <a
-                  href="#"
-                  className="text-sm text-blue-900/70 hover:text-blue-900"
-                >
-                  Terms of Service
-                </a>
-                <a
-                  href="#"
-                  className="text-sm text-blue-900/70 hover:text-blue-900"
-                >
-                  Cookie Policy
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
