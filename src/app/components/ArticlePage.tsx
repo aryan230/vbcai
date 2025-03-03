@@ -36,6 +36,7 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
   const router = useRouter();
   const [article, setArticle] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [relatedArticles, setRelatedArticles] = useState<any[]>([]);
   const [showShareModal, setShowShareModal] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
@@ -63,7 +64,11 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          setArticle({ id: docSnap.id, ...docSnap.data() });
+          const articleData = { id: docSnap.id, ...docSnap.data() };
+          setArticle(articleData);
+
+          // Fetch related articles based on tags or category
+          fetchRelatedArticles(articleData);
         } else {
           console.error("No article found with this ID");
         }
@@ -78,6 +83,64 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
       fetchArticle();
     }
   }, [articleId]);
+
+  // Add this new function to fetch related articles
+  async function fetchRelatedArticles(currentArticle: any) {
+    try {
+      // Limit to 3 related articles based on matching category or tags
+      const { query, where, limit, collection, getDocs } = await import(
+        "firebase/firestore"
+      );
+
+      // Query articles with the same category, excluding the current article
+      const articlesRef = collection(db, "blogs");
+      const categoryQuery = query(
+        articlesRef,
+        where("category", "==", currentArticle.category),
+        where("__name__", "!=", currentArticle.id),
+        limit(3)
+      );
+
+      const querySnapshot = await getDocs(categoryQuery);
+      const relatedResults: any[] = [];
+
+      querySnapshot.forEach((doc) => {
+        relatedResults.push({ id: doc.id, ...doc.data() });
+      });
+
+      // If we don't have 3 articles yet, try to find more based on tags
+      if (
+        relatedResults.length < 3 &&
+        currentArticle.tags &&
+        currentArticle.tags.length > 0
+      ) {
+        // Get random tag from current article
+        const randomTag =
+          currentArticle.tags[
+            Math.floor(Math.random() * currentArticle.tags.length)
+          ];
+
+        const tagsQuery = query(
+          articlesRef,
+          where("tags", "array-contains", randomTag),
+          where("__name__", "!=", currentArticle.id),
+          limit(3 - relatedResults.length)
+        );
+
+        const tagsSnapshot = await getDocs(tagsQuery);
+        tagsSnapshot.forEach((doc) => {
+          // Check if this article is not already in our results
+          if (!relatedResults.some((article) => article.id === doc.id)) {
+            relatedResults.push({ id: doc.id, ...doc.data() });
+          }
+        });
+      }
+
+      setRelatedArticles(relatedResults);
+    } catch (error) {
+      console.error("Error fetching related articles:", error);
+    }
+  }
 
   // Function to copy article link to clipboard
   const copyToClipboard = async () => {
@@ -323,41 +386,149 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
                 </button>
               </div>
             </div>
+
+            {/* Related Articles Section */}
+            {relatedArticles.length > 0 && (
+              <div className="mt-16">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Related Articles
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {relatedArticles.map((relatedArticle) => (
+                    <div
+                      key={relatedArticle.id}
+                      className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+                      onClick={() =>
+                        router.push(`/article/${relatedArticle.id}`)
+                      }
+                    >
+                      {/* Article thumbnail */}
+                      <div className="aspect-[16/9] relative bg-gray-100 overflow-hidden">
+                        {relatedArticle.images?.[0] ? (
+                          <Image
+                            src={relatedArticle.images[0]}
+                            alt={relatedArticle.title}
+                            fill
+                            className="object-cover hover:scale-105 transition-transform duration-300"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-r from-blue-400 to-blue-600" />
+                        )}
+                      </div>
+
+                      {/* Article content */}
+                      <div className="p-5">
+                        {/* Category */}
+                        <div className="mb-2">
+                          <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-md text-xs font-medium">
+                            {relatedArticle.category}
+                          </span>
+                        </div>
+
+                        {/* Title */}
+                        <h3 className="font-bold text-lg mb-2 text-gray-900 line-clamp-2">
+                          {relatedArticle.title}
+                        </h3>
+
+                        {/* Metadata */}
+                        <div className="flex items-center text-gray-500 text-sm">
+                          <Clock className="w-3.5 h-3.5 mr-1.5" />
+                          <span>{relatedArticle.readTime || "5 min read"}</span>
+                          <span className="mx-2">•</span>
+                          <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                          <span>
+                            {relatedArticle.createdAt
+                              ? format(
+                                  relatedArticle.createdAt.toDate(),
+                                  "MMM d, yyyy"
+                                )
+                              : format(new Date(), "MMM d, yyyy")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* More articles button */}
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={() => router.push("/articles")}
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center"
+                  >
+                    <span className="font-medium">View more articles</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar column */}
           <div className="lg:col-span-4">
             <div className="sticky top-24 space-y-8">
-              {/* Author card */}
+              {/* Popular Articles */}
               <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4">About the author</h3>
-                <div className="flex items-center">
-                  <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                    <span className="font-bold text-blue-800 text-xl">
-                      {typeof article.author === "string"
-                        ? article.author.charAt(0)
-                        : article.author.name.charAt(0)}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {typeof article.author === "string"
-                        ? article.author
-                        : article.author.name}
-                    </p>
-                    {typeof article.author !== "string" &&
-                      article.author.role && (
-                        <p className="text-sm text-gray-600">
-                          {article.author.role}, {article.author.company}
+                <h3 className="text-lg font-semibold mb-4">Popular Articles</h3>
+                <div className="space-y-4">
+                  {relatedArticles.slice(0, 3).map((relatedArticle) => (
+                    <div
+                      key={relatedArticle.id}
+                      className="flex gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                      onClick={() =>
+                        router.push(`/article/${relatedArticle.id}`)
+                      }
+                    >
+                      {/* Thumbnail */}
+                      <div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden relative flex-shrink-0">
+                        {relatedArticle.images?.[0] ? (
+                          <Image
+                            src={relatedArticle.images[0]}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-r from-blue-400 to-blue-600" />
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div>
+                        <h4 className="font-medium text-sm line-clamp-2 text-gray-900">
+                          {relatedArticle.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {relatedArticle.readTime || "5 min read"}
                         </p>
-                      )}
-                  </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <p className="mt-4 text-gray-600 text-sm">
-                  {typeof article.author !== "string" && article.author.bio
-                    ? article.author.bio
-                    : "Content creator passionate about design, technology, and creative solutions."}
+              </div>
+
+              {/* Newsletter signup */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-sm p-6 border border-blue-100">
+                <h3 className="text-lg font-semibold mb-2">
+                  Subscribe to our Newsletter
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Get the latest articles and resources in your inbox weekly.
                 </p>
+                <form className="space-y-3">
+                  <input
+                    type="email"
+                    placeholder="Your email address"
+                    className="w-full p-3 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors"
+                  >
+                    Subscribe
+                  </button>
+                </form>
               </div>
 
               {/* Related tags */}
