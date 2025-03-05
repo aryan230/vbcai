@@ -18,6 +18,7 @@ interface Article {
   images: string[];
   tags: string[];
   status: string;
+  slug: string;
 }
 
 const Articles: React.FC = () => {
@@ -168,7 +169,7 @@ const Articles: React.FC = () => {
                 {filteredArticles.slice(0, visibleArticles).map((article) => (
                   <Link
                     key={article.id}
-                    href={`/article/${article.id}`}
+                    href={`/${article.slug}`}
                     className="group"
                   >
                     <article className="h-full flex flex-col rounded-2xl overflow-hidden bg-white border border-blue-100 shadow-sm hover:shadow-lg transition-all">

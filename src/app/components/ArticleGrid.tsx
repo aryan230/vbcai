@@ -18,6 +18,7 @@ interface Article {
   images: string[];
   tags: string[];
   status: string;
+  slug: string;
 }
 
 function ArticleGrid() {
@@ -80,7 +81,7 @@ function ArticleGrid() {
       {/* Featured Article */}
       {featuredArticle && (
         <section aria-label="Featured article">
-          <Link href={`/article/${featuredArticle.id}`} className="block">
+          <Link href={`/${featuredArticle.slug}`} className="block">
             <article className="group relative grid md:grid-cols-2 gap-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 rounded-3xl p-6 md:p-10 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500">
               <div className="relative z-10 flex flex-col justify-center">
                 <div className="flex items-center gap-3 mb-6">
@@ -174,7 +175,7 @@ function ArticleGrid() {
         {/* Regular Articles Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
           {regularArticles.slice(0, visibleArticles).map((article) => (
-            <Link key={article.id} href={`/article/${article.id}`}>
+            <Link key={article.id} href={`/${article.slug}`}>
               <article className="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-slate-200 transition-all duration-300 hover:shadow-lg hover:border-slate-300 hover:-translate-y-1">
                 <div className="aspect-[16/10] relative overflow-hidden">
                   {article.images?.[0] ? (

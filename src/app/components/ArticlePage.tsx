@@ -21,18 +21,21 @@ import {
   Linkedin,
   Mail,
   Link as LinkIcon,
+  Users,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import Header from "./Header";
+import SEO from "./SEO";
+import ArticleSchema from "./ArticleSchema";
 
 interface ArticlePageProps {
-  articleId: string;
+  slug: string;
 }
 
-export default function ArticlePage({ articleId }: ArticlePageProps) {
+export default function ArticlePage({ slug }: ArticlePageProps) {
   const router = useRouter();
   const [article, setArticle] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -41,10 +44,16 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
   const [copySuccess, setCopySuccess] = useState(false);
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
   const shareButtonRef = useRef<HTMLButtonElement>(null);
+  const [viewerCount, setViewerCount] = useState<number>(0);
+  const [viewerCountIncreasing, setViewerCountIncreasing] =
+    useState<boolean>(true);
+  const viewerCountTimer = useRef<NodeJS.Timeout | null>(null);
 
   // URL to share
-  const articleUrl = typeof window !== "undefined" ? window.location.href : "";
-
+  const articleUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/${article?.slug}`
+      : "";
   // Function to handle opening the share modal
   const handleOpenShareModal = () => {
     if (shareButtonRef.current) {
@@ -60,17 +69,28 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
   useEffect(() => {
     async function fetchArticle() {
       try {
-        const docRef = doc(db, "blogs", articleId);
-        const docSnap = await getDoc(docRef);
+        const { query, collection, where, getDocs, limit } = await import(
+          "firebase/firestore"
+        );
 
-        if (docSnap.exists()) {
-          const articleData = { id: docSnap.id, ...docSnap.data() };
+        // Query by slug instead of ID
+        const articleQuery = query(
+          collection(db, "blogs"),
+          where("slug", "==", slug),
+          limit(1)
+        );
+
+        const querySnapshot = await getDocs(articleQuery);
+
+        if (!querySnapshot.empty) {
+          const articleData = {
+            id: querySnapshot.docs[0].id,
+            ...querySnapshot.docs[0].data(),
+          };
           setArticle(articleData);
-
-          // Fetch related articles based on tags or category
           fetchRelatedArticles(articleData);
         } else {
-          console.error("No article found with this ID");
+          console.error("No article found with this slug");
         }
       } catch (error) {
         console.error("Error fetching article:", error);
@@ -79,10 +99,10 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
       }
     }
 
-    if (articleId) {
+    if (slug) {
       fetchArticle();
     }
-  }, [articleId]);
+  }, [slug]);
 
   // Add this new function to fetch related articles
   async function fetchRelatedArticles(currentArticle: any) {
@@ -194,6 +214,10 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
     setShowShareModal(false);
   };
 
+  const navigateToArticle = (articleSlug: string) => {
+    router.push(`/${articleSlug}`);
+  };
+
   const shareViaEmail = () => {
     window.location.href = `mailto:?subject=${encodeURIComponent(
       article.title
@@ -210,6 +234,37 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
     );
     setShowShareModal(false);
   };
+
+  useEffect(() => {
+    // Generate a realistic initial viewer count based on article popularity
+    const baseViewers = Math.floor(Math.random() * 5) + 3; // Between 3-7 viewers
+    const adjustedViewers = article?.viewCount
+      ? Math.min(Math.floor(article.viewCount / 100) + baseViewers, 24)
+      : baseViewers;
+
+    setViewerCount(adjustedViewers);
+
+    // Simulate viewers joining and leaving
+    viewerCountTimer.current = setInterval(() => {
+      setViewerCount((prev) => {
+        // Decide if we're trending up or down
+        if (prev >= adjustedViewers + 4) setViewerCountIncreasing(false);
+        else if (prev <= Math.max(1, adjustedViewers - 2))
+          setViewerCountIncreasing(true);
+
+        // Randomly adjust, but with tendency in the current trend direction
+        const shouldChange = Math.random() > 0.7; // 30% chance of change
+        if (!shouldChange) return prev;
+
+        const direction = viewerCountIncreasing || Math.random() > 0.3 ? 1 : -1;
+        return prev + direction;
+      });
+    }, 8000); // Update every 8 seconds
+
+    return () => {
+      if (viewerCountTimer.current) clearInterval(viewerCountTimer.current);
+    };
+  }, [article?.id, article?.viewCount]);
 
   if (loading) {
     return (
@@ -242,9 +297,41 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
       </div>
     );
   }
+  const getISOString = (timestamp: any) => {
+    if (!timestamp) return new Date().toISOString();
+    // Handle Firestore Timestamp
+    if (timestamp.toDate) return timestamp.toDate().toISOString();
+    // Handle regular Date objects
+    if (timestamp instanceof Date) return timestamp.toISOString();
+    // Handle ISO strings
+    if (typeof timestamp === "string") return timestamp;
+    // Fallback
+    return new Date().toISOString();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
+      {/* Add SEO Component */}
+      {article && (
+        <SEO
+          title={article.seo?.title || article.title}
+          description={
+            article.seo?.description || article.content.substring(0, 160)
+          }
+          keywords={article.seo?.keywords || article.tags || []}
+          ogImage={article.images?.[0]}
+          article={{
+            publishedTime: getISOString(article.createdAt),
+            modifiedTime: getISOString(article.updatedAt),
+            author:
+              typeof article.author === "string"
+                ? article.author
+                : article.author.name,
+            tags: article.tags,
+          }}
+        />
+      )}
+      {article && <ArticleSchema article={article} />}
       {/* Include the Header component */}
       <Header />
 
@@ -330,6 +417,19 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
                 <Clock className="w-4 h-4 mr-1.5 text-gray-500" />
                 <span className="text-sm">{article.readTime}</span>
               </div>
+
+              {/* Live viewer counter */}
+              <div className="hidden ml-auto lg:flex items-center bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-1.5 rounded-full border border-blue-100">
+                <div className="relative mr-2">
+                  <Users size={14} className="text-blue-600" />
+                  <span className="absolute -right-1 -top-1 w-2 h-2 rounded-full bg-blue-600 animate-ping"></span>
+                  <span className="absolute -right-1 -top-1 w-2 h-2 rounded-full bg-blue-600"></span>
+                </div>
+                <span className="text-xs font-medium text-blue-800">
+                  {viewerCount} {viewerCount === 1 ? "person" : "people"}{" "}
+                  reading now
+                </span>
+              </div>
             </div>
 
             {/* Hero image */}
@@ -346,6 +446,19 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
               ) : (
                 <div className="w-full h-full bg-gradient-to-r from-blue-900 to-blue-600" />
               )}
+            </div>
+
+            {/* Below the hero image, for mobile viewers */}
+            <div className="lg:hidden flex items-center justify-center mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 rounded-full border border-blue-100">
+              <div className="relative mr-2">
+                <Users size={16} className="text-blue-600" />
+                <span className="absolute -right-1 -top-1 w-2 h-2 rounded-full bg-blue-600 animate-ping"></span>
+                <span className="absolute -right-1 -top-1 w-2 h-2 rounded-full bg-blue-600"></span>
+              </div>
+              <span className="text-sm font-medium text-blue-800">
+                {viewerCount} {viewerCount === 1 ? "person" : "people"} reading
+                now
+              </span>
             </div>
 
             {/* Article content */}
@@ -398,9 +511,7 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
                     <div
                       key={relatedArticle.id}
                       className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100"
-                      onClick={() =>
-                        router.push(`/article/${relatedArticle.id}`)
-                      }
+                      onClick={() => navigateToArticle(relatedArticle.slug)}
                     >
                       {/* Article thumbnail */}
                       <div className="aspect-[16/9] relative bg-gray-100 overflow-hidden">
@@ -475,9 +586,7 @@ export default function ArticlePage({ articleId }: ArticlePageProps) {
                     <div
                       key={relatedArticle.id}
                       className="flex gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
-                      onClick={() =>
-                        router.push(`/article/${relatedArticle.id}`)
-                      }
+                      onClick={() => router.push(`/${relatedArticle.slug}`)}
                     >
                       {/* Thumbnail */}
                       <div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden relative flex-shrink-0">
