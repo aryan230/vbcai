@@ -21,6 +21,7 @@ import ArticleGrid from "./ArticleGrid";
 import CTA from "./CTA";
 import Footer from "./Footer";
 import CTA2 from "./CTA2";
+import Hero from "./Hero";
 
 interface Article {
   id: string;
@@ -74,7 +75,7 @@ const DesignBlog: React.FC = () => {
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-6 pt-16 pb-12">
         {/* Banner Image Container */}
-        <div className="w-full mb-16">
+        {/* <div className="w-full mb-16">
           <img
             src="/banner.png"
             alt="Value-Based Care Banner"
@@ -82,20 +83,8 @@ const DesignBlog: React.FC = () => {
             width={1200}
             height={400}
           />
-        </div>
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-block px-4 py-1.5 bg-blue-600 text-white rounded-full text-sm font-medium mb-6">
-            Value-Based Care Insights
-          </span>
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-blue-900 via-blue-600 to-blue-900 bg-clip-text text-transparent">
-            Transforming Healthcare Through Value-Based Care
-          </h1>
-          <p className="text-blue-900/80 text-lg">
-            Stay informed about the latest trends, strategies, and success
-            stories in value-based care delivery and population health
-            management.
-          </p>
-        </div>
+        </div> */}
+        <Hero />
         {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           {[
