@@ -86,7 +86,7 @@ const DesignBlog: React.FC = () => {
         </div> */}
         <Hero />
         {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 pt-10">
           {[
             {
               icon: Users,
